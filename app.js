@@ -1,3 +1,4 @@
+import cors from 'cors'
 import express from 'express'
 import sequelize from './dbConnections/dbConnection.js'
 import commentModel from './modules/Tabels/commenttable.js'
@@ -10,9 +11,9 @@ const app = express()
 const port = process.env.PORT || 8000
 
 
-app.use(express.json());
 app.use(cors());
-app.use('/auth', cors(), usersRouters)
+app.use(express.json());
+app.use('/auth', usersRouters)
 app.use('/posts', postsRouter)
 app.use('/users', usersRouters)
 app.use('/comments', commentRouter)
