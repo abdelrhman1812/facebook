@@ -10,9 +10,9 @@ const app = express()
 const port = process.env.PORT || 8000
 
 
-
 app.use(express.json());
-app.use('/auth', usersRouters)
+app.use(cors());
+app.use('/auth', cors(), usersRouters)
 app.use('/posts', postsRouter)
 app.use('/users', usersRouters)
 app.use('/comments', commentRouter)
