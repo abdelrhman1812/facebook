@@ -6,16 +6,22 @@ import { cloudinaryRemoveImage, cloudinaryUploadImage } from "../Cloudinary/clou
 import commentModel from "../Tabels/commenttable.js";
 import postModel from "../Tabels/postTable.js";
 import userModel from "../Tabels/userTable.js";
-// Get the __dirname equivalent in ES6 modules
+
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+
 /* =============== signin =============== */
 
 const signin = async (req, res) => {
     const { email, password } = req.body;
 
+    if (!email || !password) {
+        return res.status(400).json({ error: "Email and password are required" });
+    }
+
     try {
-        // Check if email exists
         const user = await userModel.findOne({
             where: { email }
         });
@@ -24,21 +30,19 @@ const signin = async (req, res) => {
             return res.status(400).json({ error: "Email does not exist" });
         }
 
-        // Compare  password with  hashed password
         const match = bcrypt.compareSync(password, user.password);
 
         if (!match) {
             return res.status(400).json({ error: "Incorrect password" });
         }
 
-        // If email exists and password matches
         return res.status(200).json({ mes: "success", user });
 
     } catch (error) {
-        console.error('Error during signin:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        return res.status(500).json({ error: error });
     }
 };
+
 /* =============== signup =============== */
 
 const signup = async (req, res) => {
@@ -50,14 +54,10 @@ const signup = async (req, res) => {
     } catch (error) {
         // console.log(error)
         if (error.name === 'SequelizeValidationError') {
-            // console.log('Validation error(s):');
-            // error.errors.forEach(err => {
-            //     console.log(err.message);
-            // });
-            res.status(400).json({ error: error.message });
+
+            return res.status(400).json({ error: error.message });
         } else {
-            console.error('Error during signup:', error);
-            res.status(500).json({ error: 'Internal server error' });
+            return res.status(500).json({ error: error.errors[0].message });
         }
     }
 };
@@ -72,7 +72,7 @@ const getSpecificUser = async (req, res) => {
                 model: postModel,
                 include: commentModel,
                 required: false,
-                where: { deletedAt: null } // This ensures soft-deleted posts are not included
+                where: { deletedAt: null }
             }
         });
 
@@ -112,19 +112,7 @@ const getUser = async (req, res) => {
 const getAllUser = async (req, res) => {
     const { id } = req.params;
     try {
-        const user = await userModel.findAll(
-            // {
-            //     include: [
-            //         {
-            //             model: fileModel,
-            //             required: true,
-
-            //         }
-
-            //     ]
-            // }
-
-        );
+        const user = await userModel.findAll();
 
 
 
@@ -139,24 +127,18 @@ const getAllUser = async (req, res) => {
 
 
 const uploadUserProfile = async (req, res) => {
+    const userId = req.body.userId;
     try {
-        if (!req.file) {
-            console.error("No file uploaded");
-            return res.status(400).json({ error: 'No file uploaded' });
+        // Find the user by their ID
+        const user = await userModel.findByPk(userId);
+
+        if (!user || !req.file) {
+            return res.status(400).json({ error: 'No file uploaded or not find user' });
         }
 
         const imagePath = path.join(__dirname, `../image/${req.file.filename}`);
         const cloudinaryResult = await cloudinaryUploadImage(imagePath);
 
-        // Assuming you have user authentication and can retrieve user ID from req.user
-        const userId = req.body.userId;
-
-        // Find the user by their ID
-        const user = await userModel.findByPk(userId);
-
-        if (!user) {
-            throw new Error('User not found');
-        }
 
         // Check if the user already has a profile photo with a public_id
         if (user.profilePhotoPublicId !== null) {

@@ -74,9 +74,10 @@ const deleteComment = async (req, res) => {
 const getAllComments = async (req, res) => {
     try {
         const comments = await commentModel.findAll()
-        res.status(200).json({ mes: "success", comments });
+        res.status(200).json({ message: "success", comments });
     } catch (error) {
         console.log(error)
+        return res.status(500).json({ message: 'Internal server error', error });
 
     }
 }

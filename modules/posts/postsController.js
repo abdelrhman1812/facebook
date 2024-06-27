@@ -10,15 +10,15 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 /* ==========  Add Post ==========  */
+
 const addPost = async (req, res) => {
     try {
-        let cloudinaryResult = {}; // Initialize an empty object for cloudinaryResult
+        let cloudinaryResult = {}; //that content  " secure_url & public_id "
 
         // Check if a file was uploaded
         if (req.file) {
-            // Construct the path to the uploaded image on the server
             const imagePath = path.join(__dirname, `../image/${req.file.filename}`);
-            console.log(imagePath)
+            // console.log(imagePath)
 
             // Upload the image to Cloudinary
             cloudinaryResult = await cloudinaryUploadImage(imagePath);
@@ -37,9 +37,7 @@ const addPost = async (req, res) => {
 
         // Create a new post record in the database
         const createdPost = await postModel.create(postBody);
-        console.log("Created Post:", createdPost);
 
-        // Respond with success message and created post data
         res.status(200).json({
             message: "Successfully created post",
             post: createdPost
@@ -48,7 +46,7 @@ const addPost = async (req, res) => {
     } catch (error) {
         // Handle any errors that occur during image upload, database creation, or deletion of the temporary image file
         console.error("Error creating post:", error);
-        res.status(500).json({ error: "Failed to create post" });
+        res.status(500).json({ message: "Failed to create post" });
     }
 };
 
@@ -57,24 +55,36 @@ const addPost = async (req, res) => {
 /* ==========  update Post ==========  */
 
 const updatePost = async (req, res) => {
-    const { id } = req.params
-    try {
-        const post = await postModel.findByPk(id)
-        if (!post) {
-            return res.status(400).json({ error: "post is not exists" });
+    const { id } = req.params;
+    const { body } = req;
 
+    try {
+        // Check if the post exists
+        const post = await postModel.findByPk(id);
+        if (!post) {
+            return res.status(400).json({ error: "Post does not exist" });
         }
-        await postModel.update(req.body, { where: { id: id } });
-        res.status(200).json({ mes: "success" });
+
+        if (!body || Object.keys(body).length === 0) {
+            return res.status(400).json({ error: "Empty title or content" });
+        }
+
+        await postModel.update(body, { where: { id } });
+
+        // Fetch the updated post
+        const postUpdated = await postModel.findByPk(id);
+
+        // Respond with the updated post
+        res.status(200).json({ message: "Success", post: postUpdated });
     } catch (error) {
         if (error.name === 'SequelizeValidationError') {
             res.status(400).json({ error: error.message });
         } else {
-            console.error('Error during signup:', error);
-            res.status(500).json({ error: 'Internal server error' });
+            console.error('Error during update:', error);
+            res.status(500).json({ message: 'Internal server error' });
         }
     }
-}
+};
 
 /* ==========  Delete Post ==========  */
 const deletePost = async (req, res) => {
@@ -92,7 +102,7 @@ const deletePost = async (req, res) => {
         res.status(200).json({ message: "Post successfully deleted", deletedPost });
     } catch (error) {
         console.error('Error deleting post:', error);
-        res.status(500).json({ error: "An error occurred" });
+        res.status(500).json({ message: "An error occurred" });
     }
 };
 
@@ -110,6 +120,7 @@ const getAllPosts = async (req, res) => {
 
 
                 },
+
                 {
                     model: commentModel,
                     required: false,
@@ -119,10 +130,10 @@ const getAllPosts = async (req, res) => {
             ]
         });
 
-        res.status(200).json({ mes: "success", posts });
+        return res.status(200).json({ message: "success", posts });
     } catch (error) {
         console.error('Error fetching posts and comments:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        return res.status(500).json({ message: 'Internal server error', error });
     }
 };
 
@@ -136,7 +147,6 @@ const getSpecificPost = async (req, res) => {
             include: [
                 {
                     model: userModel,
-
                     attributes: { exclude: ['password'] }
                 },
                 {
@@ -154,7 +164,7 @@ const getSpecificPost = async (req, res) => {
         res.status(200).json({ message: "Success", post });
     } catch (error) {
         console.error('Error fetching post and author:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ message: 'Internal server error' });
     }
 };
 
