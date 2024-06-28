@@ -1,8 +1,10 @@
 import commentModel from "../Tabels/commenttable.js";
 import postModel from "../Tabels/postTable.js";
+import userModel from "../Tabels/userTable.js";
 
 
 /* ==========  Add Comment ==========  */
+
 
 const addComment = async (req, res) => {
 
@@ -10,7 +12,7 @@ const addComment = async (req, res) => {
     try {
         const post = await postModel.findByPk(postId)
 
-        const user = await postModel.findByPk(userId)
+        const user = await userModel.findByPk(userId)
         if (!user || !post) {
             return res.status(400).json({ error: "post or user is not exists" });
 
@@ -27,6 +29,7 @@ const addComment = async (req, res) => {
         }
     }
 }
+
 
 /* ==========  update Comment ==========  */
 
