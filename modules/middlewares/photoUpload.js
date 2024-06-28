@@ -34,7 +34,7 @@ const photoUpload = multer({
             cb({ message: 'Unsupported File Format' }, false);
         }
     },
-    limits: { fileSize: 1024 * 1024 } // 1MB file size limit
+
 });
 
 
